@@ -11,7 +11,13 @@ const io = new IntersectionObserver(
     for (const e of entries) {
       if (!e.isIntersecting) continue;
       chips.forEach((a, id) => a.setAttribute('aria-current', String(id === e.target.id)));
-      chips.get(e.target.id)?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+      // Scroll only the chip bar; scrollIntoView would also nudge the page and kill the user's fling.
+      const chip = chips.get(e.target.id);
+      const bar = chip?.parentElement;
+      if (chip && bar) {
+        const offset = chip.getBoundingClientRect().left - bar.getBoundingClientRect().left;
+        bar.scrollTo({ left: bar.scrollLeft + offset - (bar.clientWidth - chip.offsetWidth) / 2, behavior: 'smooth' });
+      }
     }
   },
   { rootMargin: '-45% 0px -50% 0px' },
