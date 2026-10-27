@@ -8,6 +8,10 @@ import MemoryGame from '../components/MemoryGame.astro';
 import { places, castles, food, culture, arena, crowd, phrases } from '../data/content';
 import credits from '../data/credits.json';
 import { Font } from 'astro:assets';
+import { existsSync } from 'node:fs';
+
+// A play button appears only for phrases whose clip has been generated (npm run audio).
+const hasAudio = (slug: string) => existsSync(`public/audio/${slug}.mp3`);
 
 const nav = [
   ['places', 'Places'], ['castles', 'Castles'], ['food', 'Food'], ['culture', 'Culture'],
@@ -179,7 +183,15 @@ const facts = [
         <p class="lede" data-reveal>Four words to try at the booth.</p>
         <dl class="phrases" data-stagger>
           {phrases.map((p) => (
-            <div><dt lang="lt">{p.lt}</dt><dd>{p.en}<span>say “{p.say}”</span></dd></div>
+            <div>
+              <dt lang="lt">{p.lt}</dt>
+              <dd>{p.en}<span>say “{p.say}”</span></dd>
+              {hasAudio(p.audio) && (
+                <button type="button" class="say-btn" data-audio={`/audio/${p.audio}.mp3`} aria-label={`Hear how to say ${p.lt}`}>
+                  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+                </button>
+              )}
+            </div>
           ))}
         </dl>
       </section>
@@ -197,13 +209,29 @@ const facts = [
               <li><a href={c.url} rel="noopener">{c.title}</a> by {c.author}, <a href={c.licenseUrl} rel="noopener license">{c.license}</a></li>
             ))}
           </ul>
-          <p>Photos from Wikimedia Commons. Map data from Natural Earth.</p>
+          <p>Photos from Wikimedia Commons. Map data from Natural Earth.{phrases.some((p) => hasAudio(p.audio)) && " Pronunciation clips made with a Microsoft Azure Lithuanian AI voice."}</p>
         </details>
       </div>
     </footer>
 
     <script>
       import '../scripts/motion';
+
+      // One shared player, so tapping a new word stops the last one.
+      const player = new Audio();
+      let current: HTMLElement | undefined;
+      const done = () => current?.removeAttribute('data-playing');
+      player.addEventListener('ended', done);
+      player.addEventListener('error', done);
+      document.querySelectorAll<HTMLButtonElement>('[data-audio]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          done();
+          current = btn;
+          btn.setAttribute('data-playing', '');
+          player.src = btn.dataset.audio!;
+          player.play().catch(done);
+        }),
+      );
     </script>
   </body>
 </html>
@@ -271,10 +299,13 @@ const facts = [
   .games :global(.game-stat) { color: var(--ink-soft); font-weight: 700; font-variant-numeric: tabular-nums; min-height: 1.5rem; }
 
   .phrases { display: grid; gap: 0.5rem; margin-top: 1.75rem; }
-  .phrases div { display: grid; grid-template-columns: 9.5rem 1fr; gap: 1rem; align-items: baseline; padding: 0.9rem 0; border-bottom: 2px dotted var(--line); }
+  .phrases div { display: grid; grid-template-columns: 9.5rem 1fr auto; gap: 1rem; align-items: center; padding: 0.9rem 0; border-bottom: 2px dotted var(--line); }
   .phrases dt { font: 700 2rem/1 var(--font-display); color: var(--green); }
   .phrases dd { font-weight: 800; font-size: 1.15rem; }
   .phrases dd span { display: block; font-weight: 400; font-size: 0.95rem; color: var(--ink-soft); }
+  .say-btn { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--green); color: var(--on-green); transition: transform 0.15s; }
+  .say-btn:active { transform: scale(0.92); }
+  .say-btn[data-playing] { box-shadow: 0 0 0 4px var(--yellow); }
 
   .footer { background: var(--surface); }
   .footer-thanks { font: 700 2rem/1.1 var(--font-display); }

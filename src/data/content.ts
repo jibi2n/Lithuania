@@ -92,8 +92,8 @@ export const pins = [
 export const quiz: Item[] = [...places, ...castles, ...food, ...culture, arena];
 
 export const phrases = [
-  { lt: 'Labas!', en: 'Hello', say: 'LAH-bahs' },
-  { lt: 'Ačiū', en: 'Thank you', say: 'AH-choo' },
-  { lt: 'Taip / Ne', en: 'Yes / No', say: 'tape / neh' },
-  { lt: 'Iki!', en: 'Bye!', say: 'IH-kee' },
+  { lt: 'Labas!', en: 'Hello', say: 'LAH-bahs', audio: 'labas', speak: 'Labas!' },
+  { lt: 'Ačiū', en: 'Thank you', say: 'AH-choo', audio: 'aciu', speak: 'Ačiū.' },
+  { lt: 'Taip / Ne', en: 'Yes / No', say: 'tape / neh', audio: 'taip-ne', speak: 'Taip. <break time="400ms"/> Ne.' },
+  { lt: 'Iki!', en: 'Bye!', say: 'IH-kee', audio: 'iki', speak: 'Iki!' },
 ];

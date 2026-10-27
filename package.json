@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy": "astro build && wrangler pages deploy dist --project-name labas-lithuania"
+    "deploy": "astro build && wrangler pages deploy dist --project-name labas-lithuania",
+    "audio": "node scripts/make-audio.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.12",
