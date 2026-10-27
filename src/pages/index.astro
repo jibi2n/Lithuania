@@ -7,6 +7,7 @@ import GuessGame from '../components/GuessGame.astro';
 import MemoryGame from '../components/MemoryGame.astro';
 import { places, castles, food, culture, arena, crowd, phrases } from '../data/content';
 import credits from '../data/credits.json';
+import { Font } from 'astro:assets';
 
 const nav = [
   ['places', 'Places'], ['castles', 'Castles'], ['food', 'Food'], ['culture', 'Culture'],
@@ -18,7 +19,6 @@ const facts = [
   ['Currency', 'Euro (€)', 'since 2015'],
   ['Population', '2.9 million', 'about'],
 ];
-const fonts = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Nunito+Sans:wght@400;700;800;900&display=swap';
 ---
 <!doctype html>
 <html lang="en">
@@ -29,10 +29,8 @@ const fonts = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@60
     <meta name="description" content="Say hello to Lithuania: red brick castles, giant sand dunes, pink soup, basketball, and two quick games." />
     <meta name="theme-color" content="#006A44" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href={fonts} media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href={fonts} /></noscript>
+    <Font cssVariable="--font-playfair" />
+    <Font cssVariable="--font-nunito" />
   </head>
   <body>
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-bg focus:p-3">Skip to content</a>
@@ -48,7 +46,7 @@ const fonts = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@60
       <!-- Hero -->
       <section class="hero">
         <div class="hero-photo" data-parallax>
-          <Photo slug="trakai" alt="Trakai Island Castle, a red brick castle on an island in a lake" sizes="(orientation: portrait) 150vh, 100vw" eager />
+          <Photo slug="trakai" alt="Trakai Island Castle, a red brick castle on an island in a lake" sizes="(orientation: portrait) 130vh, 100vw" quality={40} eager />
         </div>
         <div class="hero-ribbon stripes" aria-hidden="true"></div>
         <div class="hero-text">

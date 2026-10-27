@@ -41,8 +41,8 @@
   --color-yellow: var(--yellow);
   --color-red: var(--red);
   --color-on-green: var(--on-green);
-  --font-display: 'Playfair Display', 'Georgia', serif;
-  --font-sans: 'Nunito Sans', system-ui, sans-serif;
+  --font-display: var(--font-playfair);
+  --font-sans: var(--font-nunito);
 }
 
 @layer base {
@@ -91,8 +91,7 @@
     padding: 4.5rem 1rem;
     max-width: 68rem;
     margin-inline: auto;
-  }
-  .lede {
+  }  .lede {
     color: var(--ink-soft);
     font-size: 1.125rem;
     max-width: 34rem;

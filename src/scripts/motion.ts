@@ -34,10 +34,10 @@ if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
   );
 
   gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) =>
-    gsap.from(el, { y: 32, autoAlpha: 0, duration: 0.8, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%', once: true } }),
+    gsap.from(el, { y: 32, opacity: 0, duration: 0.8, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%', once: true } }),
   );
   gsap.utils.toArray<HTMLElement>('[data-stagger]').forEach((group) =>
-    gsap.from(group.children, { y: 36, autoAlpha: 0, duration: 0.7, stagger: 0.12, ease: 'power3.out', scrollTrigger: { trigger: group, start: 'top 85%', once: true } }),
+    gsap.from(group.children, { y: 36, opacity: 0, duration: 0.7, stagger: 0.12, ease: 'power3.out', scrollTrigger: { trigger: group, start: 'top 85%', once: true } }),
   );
   gsap.utils.toArray<HTMLElement>('[data-parallax] img').forEach((img) =>
     gsap.fromTo(img, { yPercent: -8, scale: 1.18 }, { yPercent: 8, scale: 1.18, ease: 'none', scrollTrigger: { trigger: img.closest('[data-parallax]'), scrub: true } }),

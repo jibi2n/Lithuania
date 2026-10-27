@@ -20,7 +20,8 @@ const cards = pairs.flatMap((p) => [{ id: p.id, ...p.a }, { id: p.id, ...p.b }])
 
   <div class="mem-grid" data-grid>
     {cards.map((c) => (
-      <button type="button" class="mem-card" data-id={c.id} data-label={'text' in c ? c.text : c.alt} aria-label="Hidden card">
+      <button type="button" class="mem-card" data-id={c.id} data-label={'text' in c ? c.text : c.alt} data-state="down">
+        <span class="sr-only" data-sr>Hidden card</span>
         <span class="mem-inner">
           <span class="mem-back sash" aria-hidden="true"></span>
           <span class="mem-front" aria-hidden="true">
@@ -88,7 +89,7 @@ const cards = pairs.flatMap((p) => [{ id: p.id, ...p.a }, { id: p.id, ...p.b }])
 
   function setUp(card: HTMLButtonElement, state: 'down' | 'up' | 'done') {
     card.dataset.state = state;
-    card.setAttribute('aria-label', state === 'down' ? 'Hidden card' : `${card.dataset.label}${state === 'done' ? ', matched' : ''}`);
+    card.querySelector('[data-sr]')!.textContent = state === 'down' ? 'Hidden card' : `${card.dataset.label}${state === 'done' ? ', matched' : ''}`;
   }
 
   function reset() {
