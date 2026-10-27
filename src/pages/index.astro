@@ -1,0 +1,317 @@
+---
+import '../styles/global.css';
+import Photo from '../components/Photo.astro';
+import Sash from '../components/Sash.astro';
+import Map from '../components/Map.astro';
+import GuessGame from '../components/GuessGame.astro';
+import MemoryGame from '../components/MemoryGame.astro';
+import { places, castles, food, culture, arena, crowd, phrases } from '../data/content';
+import credits from '../data/credits.json';
+import { Font } from 'astro:assets';
+import { existsSync } from 'node:fs';
+
+// A play button appears only for phrases whose clip has been generated (npm run audio).
+const hasAudio = (slug: string) => existsSync(`public/audio/${slug}.mp3`);
+
+const nav = [
+  ['places', 'Places'], ['castles', 'Castles'], ['food', 'Food'], ['culture', 'Culture'],
+  ['basketball', 'Basketball'], ['map', 'Map'], ['games', 'Games'], ['speak', 'Speak'],
+];
+const facts = [
+  ['Capital', 'Vilnius'],
+  ['Language', 'Lithuanian'],
+  ['Currency', 'Euro (€)', 'since 2015'],
+  ['Population', '2.9 million', 'about'],
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Labas, Lithuania</title>
+    <meta name="description" content="Say hello to Lithuania: red brick castles, giant sand dunes, pink soup, basketball, and two quick games." />
+    <meta name="theme-color" content="#006A44" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <Font cssVariable="--font-playfair" />
+    <Font cssVariable="--font-nunito" />
+  </head>
+  <body>
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-bg focus:p-3">Skip to content</a>
+
+    <header class="topbar">
+      <nav aria-label="Sections" class="chips">
+        {nav.map(([id, label]) => <a class="chip" href={`#${id}`} data-chip aria-current="false">{label}</a>)}
+      </nav>
+      <div class="stripes h-1" aria-hidden="true"></div>
+    </header>
+
+    <main id="main">
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-photo" data-parallax>
+          <Photo slug="trakai" alt="Trakai Island Castle, a red brick castle on an island in a lake" sizes="(orientation: portrait) 130vh, 100vw" quality={40} eager />
+        </div>
+        <div class="hero-ribbon stripes" aria-hidden="true"></div>
+        <div class="hero-text">
+          <h1><span class="hero-labas">Labas!</span><span class="hero-sub">Hello from Lithuania</span></h1>
+          <p>A small country on the Baltic Sea with red brick castles, giant sand dunes, pink soup, and a big love for basketball.</p>
+        </div>
+      </section>
+
+      <!-- Quick facts -->
+      <section class="section pt-10!" aria-label="Quick facts">
+        <ul class="facts" data-stagger>
+          {facts.map(([label, value, note]) => (
+            <li><span class="fact-label">{label}</span><span class="fact-value">{value}</span>{note && <span class="fact-note">{note}</span>}</li>
+          ))}
+          <li class="fact-wide">
+            <span class="fact-label">Independence</span>
+            <span class="fact-value">March 11, 1990</span>
+            <span class="fact-note">The first Soviet republic to declare independence from the USSR.</span>
+          </li>
+        </ul>
+      </section>
+
+      <Sash />
+
+      <!-- Map -->
+      <section id="map" class="section">
+        <h2 data-reveal>Find it on the map</h2>
+        <p class="lede" data-reveal>Lithuania is the southernmost of the three Baltic states. Tap a pin to visit.</p>
+        <Map />
+      </section>
+
+      <Sash />
+
+      <!-- Places -->
+      <section id="places" class="section">
+        <h2 data-reveal>Places to see</h2>
+        <p class="lede" data-reveal>Swipe through. Three of these are UNESCO World Heritage Sites.</p>
+        <ul class="rail" data-stagger>
+          {places.map((p) => (
+            <li>
+              <figure>
+                <div class="photo aspect-4/5"><Photo slug={p.slug} alt={p.alt} sizes="(min-width: 768px) 30rem, 150vw" /></div>
+                <figcaption><h3>{p.name}</h3><p>{p.caption}</p></figcaption>
+              </figure>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <Sash />
+
+      <!-- Castles -->
+      <section id="castles" class="section">
+        <h2 data-reveal>Red brick castles</h2>
+        <div class="castles">
+          {castles.map((c) => (
+            <figure class="castle" data-reveal>
+              <div class="photo castle-photo" data-parallax><Photo slug={c.slug} alt={c.alt} sizes="(min-width: 768px) 60rem, 180vw" /></div>
+              <figcaption><h3>{c.name}</h3><p>{c.caption}</p></figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
+      <Sash />
+
+      <!-- Food -->
+      <section id="food" class="section">
+        <h2 data-reveal>Try the food</h2>
+        <ul class="plates" data-stagger>
+          {food.map((f) => (
+            <li class="plate-row">
+              <div class="plate"><Photo slug={f.slug} alt={f.alt} sizes="11rem" /></div>
+              <div><h3>{f.name}</h3><p>{f.caption}</p></div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <Sash />
+
+      <!-- Culture -->
+      <section id="culture" class="section">
+        <h2 data-reveal>Culture and nature</h2>
+        <ul class="mosaic" data-stagger>
+          {culture.map((c, i) => (
+            <li class:list={{ 'mosaic-wide': i === 0 || i === 4 }}>
+              <div class="photo mosaic-photo"><Photo slug={c.slug} alt={c.alt} sizes={i === 0 || i === 4 ? '(min-width: 768px) 40rem, 100vw' : '(min-width: 768px) 20rem, 75vw'} /></div>
+              <h3>{c.name}</h3>
+              <p>{c.caption}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <Sash />
+
+      <!-- Basketball -->
+      <section id="basketball" class="section">
+        <h2 data-reveal>Basketball country</h2>
+        <p class="lede" data-reveal>{crowd.caption}</p>
+        <ul class="medals" data-stagger aria-label="Olympic bronze medals">
+          {['1992', '1996', '2000'].map((y) => <li><span class="medal" aria-hidden="true">3</span>{y}</li>)}
+        </ul>
+        <figure class="mt-8" data-reveal>
+          <div class="photo aspect-3/2"><Photo slug={arena.slug} alt={arena.alt} sizes="(min-width: 1024px) 60rem, 100vw" /></div>
+          <figcaption><h3>{arena.name}</h3><p>{arena.caption}</p></figcaption>
+        </figure>
+      </section>
+      <figure class="crowd" data-parallax>
+        <Photo slug={crowd.slug} alt={crowd.alt} sizes="(orientation: portrait) 110vh, 100vw" />
+        <figcaption>Game night at Žalgiris Arena</figcaption>
+      </figure>
+
+      <!-- Games -->
+      <section id="games" class="section">
+        <h2 data-reveal>Play a game</h2>
+        <p class="lede" data-reveal>Each one takes about a minute. Your best score stays on this phone.</p>
+        <div class="games">
+          <GuessGame />
+          <MemoryGame />
+        </div>
+      </section>
+
+      <Sash />
+
+      <!-- Speak -->
+      <section id="speak" class="section">
+        <h2 data-reveal>Speak Lithuanian</h2>
+        <p class="lede" data-reveal>Four words to try at the booth.</p>
+        <dl class="phrases" data-stagger>
+          {phrases.map((p) => (
+            <div>
+              <dt lang="lt">{p.lt}</dt>
+              <dd>{p.en}<span>say “{p.say}”</span></dd>
+              {hasAudio(p.audio) && (
+                <button type="button" class="say-btn" data-audio={`/audio/${p.audio}.mp3`} aria-label={`Hear how to say ${p.lt}`}>
+                  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+                </button>
+              )}
+            </div>
+          ))}
+        </dl>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="stripes h-6" aria-hidden="true"></div>
+      <div class="section py-12!">
+        <p class="footer-thanks">Ačiū for visiting the Lithuania booth!</p>
+        <p class="footer-by">Made by <strong>Celestine Gale Pilapil</strong></p>
+        <details class="credits">
+          <summary>Photo credits</summary>
+          <ul>
+            {credits.map((c) => (
+              <li><a href={c.url} rel="noopener">{c.title}</a> by {c.author}, <a href={c.licenseUrl} rel="noopener license">{c.license}</a></li>
+            ))}
+          </ul>
+          <p>Photos from Wikimedia Commons. Map data from Natural Earth.{phrases.some((p) => hasAudio(p.audio)) && " Pronunciation clips made with a Microsoft Azure Lithuanian AI voice."}</p>
+        </details>
+      </div>
+    </footer>
+
+    <script>
+      import '../scripts/motion';
+
+      // One shared player, so tapping a new word stops the last one.
+      const player = new Audio();
+      let current: HTMLElement | undefined;
+      const done = () => current?.removeAttribute('data-playing');
+      player.addEventListener('ended', done);
+      player.addEventListener('error', done);
+      document.querySelectorAll<HTMLButtonElement>('[data-audio]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          done();
+          current = btn;
+          btn.setAttribute('data-playing', '');
+          player.src = btn.dataset.audio!;
+          player.play().catch(done);
+        }),
+      );
+    </script>
+  </body>
+</html>
+
+<style>
+  .topbar { position: sticky; top: 0; z-index: 40; background: color-mix(in oklab, var(--bg) 88%, transparent); backdrop-filter: blur(10px); }
+  .chips { display: flex; gap: 0.4rem; padding: 0.5rem 1rem; overflow-x: auto; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+
+  .hero { position: relative; min-height: 88svh; display: grid; align-items: end; overflow: hidden; color: #fff; }
+  .hero-photo { position: absolute; inset: 0; }
+  .hero-photo :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, #06231a 0%, rgb(6 35 26 / 0.75) 32%, rgb(6 35 26 / 0) 62%); }
+  .hero-ribbon { position: absolute; z-index: 2; left: 1rem; top: 0; width: 14px; height: 55%; background: linear-gradient(90deg, var(--yellow) 0 33.34%, #006a44 0 66.67%, #c1272d 0); }
+  .hero-text { position: relative; z-index: 2; padding: 0 1rem 2.5rem 2.6rem; max-width: 40rem; }
+  .hero-labas { display: block; font-size: clamp(4.5rem, 24vw, 10rem); line-height: 0.85; letter-spacing: -0.02em; }
+  .hero-sub { display: block; font-size: clamp(2rem, 9vw, 3.5rem); margin-top: 0.4rem; color: var(--yellow); }
+  .hero-text p { margin-top: 1rem; font-size: 1.1rem; max-width: 30rem; }
+
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .facts li { background: var(--surface); border-radius: 1rem; padding: 0.9rem 1rem; display: flex; flex-direction: column; }
+  .fact-wide { grid-column: 1 / -1; border-left: 6px solid var(--red); }
+  .fact-label { font-size: 0.85rem; font-weight: 700; color: var(--ink-soft); }
+  .fact-value { font: 700 1.75rem/1.1 var(--font-display); color: var(--green); }
+  .fact-note { font-size: 0.85rem; color: var(--ink-soft); }
+  @media (min-width: 768px) { .facts { grid-template-columns: repeat(4, 1fr); } }
+
+  .rail { display: flex; gap: 0.9rem; overflow-x: auto; scroll-snap-type: x mandatory; margin: 1.75rem -1rem 0; padding: 0 1rem 0.5rem; scroll-padding-inline: 1rem; scrollbar-width: thin; }
+  .rail li { flex: 0 0 min(80vw, 22rem); scroll-snap-align: start; }
+  figcaption h3 { margin-top: 0.8rem; }
+  figcaption p, .plate-row p, .mosaic p { color: var(--ink-soft); margin-top: 0.25rem; }
+
+  .castles { display: grid; gap: 2.5rem; margin-top: 1.75rem; }
+  .castle-photo { aspect-ratio: 4 / 5; }
+  @media (min-width: 768px) { .castle-photo { aspect-ratio: 16 / 9; } }
+
+  .plates { display: grid; gap: 1.75rem; margin-top: 1.75rem; }
+  .plate-row { display: grid; grid-template-columns: 7.5rem 1fr; gap: 1rem; align-items: center; }
+  .plate-row:nth-child(even) { grid-template-columns: 1fr 7.5rem; }
+  .plate-row:nth-child(even) .plate { order: 2; }
+  .plate { aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 5px solid var(--bg); box-shadow: 0 0 0 4px var(--yellow); }
+  .plate :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  @media (min-width: 768px) { .plate-row, .plate-row:nth-child(even) { grid-template-columns: 11rem 1fr; } .plate-row:nth-child(even) .plate { order: 0; } }
+
+  .mosaic { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 0.75rem; margin-top: 1.75rem; }
+  .mosaic-wide { grid-column: 1 / -1; }
+  .mosaic-photo { aspect-ratio: 1; }
+  .mosaic-wide .mosaic-photo { aspect-ratio: 16 / 10; }
+  .mosaic h3 { margin-top: 0.6rem; font-size: 1.35rem; }
+  .mosaic p { font-size: 0.95rem; }
+  @media (min-width: 768px) { .mosaic { grid-template-columns: repeat(4, 1fr); } .mosaic-wide { grid-column: span 2; } }
+
+  .medals { display: flex; gap: 1.25rem; margin-top: 1.5rem; }
+  .medals li { display: flex; align-items: center; gap: 0.5rem; font: 700 1.6rem var(--font-display); }
+  .medal { width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center; font: 900 1rem var(--font-sans); color: #3b2210; background: radial-gradient(circle at 35% 30%, #e7b98a, #b0703a 70%); box-shadow: 0 0 0 3px #8a5226; }
+
+  .crowd { position: relative; height: 70svh; overflow: hidden; margin: 0; }
+  .crowd :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  .crowd figcaption { position: absolute; left: 1rem; bottom: 1rem; padding: 0.3rem 0.8rem; border-radius: 999px; background: rgb(0 0 0 / 0.65); color: #fff; font-weight: 700; font-size: 0.9rem; }
+
+  .games { display: grid; gap: 1.5rem; margin-top: 1.75rem; }
+  @media (min-width: 1024px) { .games { grid-template-columns: 1fr 1fr; align-items: start; } }
+  .games :global(.game) { background: var(--surface); border-radius: 1.5rem; padding: 1rem; }
+  .games :global(.game-head) { margin-bottom: 0.9rem; }
+  .games :global(.game-stat) { color: var(--ink-soft); font-weight: 700; font-variant-numeric: tabular-nums; min-height: 1.5rem; }
+
+  .phrases { display: grid; gap: 0.5rem; margin-top: 1.75rem; }
+  .phrases div { display: grid; grid-template-columns: 9.5rem 1fr auto; gap: 1rem; align-items: center; padding: 0.9rem 0; border-bottom: 2px dotted var(--line); }
+  .phrases dt { font: 700 2rem/1 var(--font-display); color: var(--green); }
+  .phrases dd { font-weight: 800; font-size: 1.15rem; }
+  .phrases dd span { display: block; font-weight: 400; font-size: 0.95rem; color: var(--ink-soft); }
+  .say-btn { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--green); color: var(--on-green); transition: transform 0.15s; }
+  .say-btn:active { transform: scale(0.92); }
+  .say-btn[data-playing] { box-shadow: 0 0 0 4px var(--yellow); }
+
+  .footer { background: var(--surface); }
+  .footer-thanks { font: 700 2rem/1.1 var(--font-display); }
+  .footer-by { margin-top: 0.75rem; font-size: 1.1rem; }
+  .credits { margin-top: 2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  .credits summary { min-height: 44px; display: flex; align-items: center; font-weight: 800; color: var(--ink); cursor: pointer; }
+  .credits ul { display: grid; gap: 0.35rem; margin: 0.5rem 0 1rem; }
+  .credits a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+</style>

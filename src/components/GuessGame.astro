@@ -1,0 +1,155 @@
+---
+import { quiz } from '../data/content';
+import { photoUrl } from '../data/photos';
+
+const data = await Promise.all(
+  quiz.map(async (q) => ({ name: q.name, category: q.category, alt: q.alt, src: await photoUrl(q.slug, 720) })),
+);
+---
+<article class="game" data-guess>
+  <header class="game-head">
+    <h3>Guess the Photo</h3>
+    <p class="game-stat" aria-live="polite" data-status>8 rounds. The faster you guess, the more points.</p>
+  </header>
+
+  <div class="guess-stage">
+    <div class="guess-frame">
+      <img data-img alt="" width="720" height="480" hidden />
+      <span class="guess-cat" data-cat hidden></span>
+      <div class="guess-cover" data-cover>
+        <p>A photo starts blurry and slowly gets clear. Pick the right answer before it does!</p>
+        <button type="button" class="btn" data-start>Start game</button>
+      </div>
+    </div>
+    <div class="guess-answers" data-answers></div>
+    <p class="guess-feedback" data-feedback aria-live="assertive"></p>
+  </div>
+  <script type="application/json" data-quiz set:html={JSON.stringify(data)} />
+</article>
+
+<style>
+  .guess-frame {
+    position: relative; aspect-ratio: 3 / 2; overflow: hidden;
+    border-radius: 1rem; background: var(--surface-2);
+  }
+  .guess-frame img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
+  .guess-cat {
+    position: absolute; top: 0.6rem; left: 0.6rem;
+    padding: 0.2rem 0.7rem; border-radius: 999px;
+    background: var(--bg); color: var(--ink); font-weight: 800; font-size: 0.85rem;
+  }
+  .guess-cover {
+    position: absolute; inset: 0; display: grid; place-content: center; gap: 1rem;
+    padding: 1.25rem; text-align: center; font-weight: 700;
+    background: var(--surface);
+  }
+  .guess-cover p { max-width: 22rem; }
+  .guess-answers { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
+  .guess-answers :global(button) {
+    min-height: 52px; border-radius: 0.85rem; padding: 0.5rem 1rem;
+    font-weight: 800; font-size: 1.05rem; text-align: left;
+    background: var(--bg); color: var(--ink); border: 2px solid var(--line);
+  }
+  .guess-answers :global(button)[data-result='right'] { background: var(--green); color: var(--on-green); }
+  .guess-answers :global(button)[data-result='wrong'] { border-color: var(--red); }
+  .guess-answers :global(button):disabled { cursor: default; }
+  .guess-feedback { min-height: 1.6rem; margin-top: 0.5rem; font-weight: 800; }
+</style>
+
+<script>
+  import { bestScore, setBest, shuffle } from '../scripts/games';
+
+  type Q = { name: string; category: string; alt: string; src: string };
+  const ROUNDS = 8, CLEAR_MS = 8000, MAX_BLUR = 28;
+
+  const root = document.querySelector<HTMLElement>('[data-guess]')!;
+  const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+  const all: Q[] = JSON.parse($('[data-quiz]').textContent!);
+  const img = $<HTMLImageElement>('[data-img]');
+  const cat = $('[data-cat]'), cover = $('[data-cover]'), answers = $('[data-answers]');
+  const status = $('[data-status]'), feedback = $('[data-feedback]');
+
+  let rounds: Q[] = [], round = 0, score = 0, shownAt = 0, raf = 0, answered = false;
+
+  function points(ms: number) {
+    return Math.round(100 - 80 * Math.min(ms / CLEAR_MS, 1));
+  }
+
+  function blurLoop() {
+    const t = Math.min((performance.now() - shownAt) / CLEAR_MS, 1);
+    img.style.filter = `blur(${(MAX_BLUR * (1 - t)).toFixed(1)}px)`;
+    if (t < 1 && !answered) raf = requestAnimationFrame(blurLoop);
+  }
+
+  function start() {
+    rounds = shuffle(all).slice(0, ROUNDS);
+    round = 0;
+    score = 0;
+    cover.hidden = true;
+    img.hidden = cat.hidden = false;
+    next();
+  }
+
+  function next() {
+    const q = rounds[round];
+    answered = false;
+    feedback.textContent = '';
+    status.textContent = `Round ${round + 1} of ${ROUNDS} · Score ${score}`;
+    img.style.filter = `blur(${MAX_BLUR}px)`;
+    img.alt = 'A blurry mystery photo';
+    cat.textContent = q.category;
+    const others = shuffle(all.filter((o) => o.category === q.category && o.name !== q.name)).slice(0, 2);
+    answers.replaceChildren(
+      ...shuffle([q, ...others]).map((o) => {
+        const b = Object.assign(document.createElement('button'), { type: 'button', textContent: o.name });
+        b.addEventListener('click', () => answer(b, o === q));
+        return b;
+      }),
+    );
+    img.onload = () => {
+      shownAt = performance.now();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(blurLoop);
+    };
+    img.src = q.src;
+  }
+
+  function answer(btn: HTMLButtonElement, right: boolean) {
+    if (answered) return;
+    answered = true;
+    cancelAnimationFrame(raf);
+    const q = rounds[round];
+    img.style.filter = 'none';
+    img.alt = q.alt;
+    const gained = right ? points(performance.now() - shownAt) : 0;
+    score += gained;
+    answers.querySelectorAll('button').forEach((b) => {
+      b.disabled = true;
+      if (b.textContent === q.name) { b.dataset.result = 'right'; b.textContent = `✓ ${q.name}`; }
+    });
+    if (!right) { btn.dataset.result = 'wrong'; btn.textContent = `✗ ${btn.textContent}`; }
+    feedback.textContent = right ? `✓ Correct! +${gained} points` : `✗ Not quite. It's ${q.name}.`;
+    status.textContent = `Round ${round + 1} of ${ROUNDS} · Score ${score}`;
+    round++;
+    setTimeout(round < ROUNDS ? next : end, 1600);
+  }
+
+  function end() {
+    const best = Math.max(score, bestScore('guess') ?? 0);
+    setBest('guess', best);
+    img.hidden = cat.hidden = true;
+    answers.replaceChildren();
+    feedback.textContent = '';
+    cover.hidden = false;
+    const great = score >= 560;
+    cover.querySelector('p')!.innerHTML =
+      `<strong style="font:700 2rem var(--font-display)">${great ? 'Puiku! (Excellent!)' : 'Gerai! (Good!)'}</strong><br>` +
+      `You scored ${score} of ${ROUNDS * 100}. Best: ${best}.`;
+    cover.querySelector('button')!.textContent = 'Play again';
+    status.textContent = `Game over. You scored ${score} points. Best score ${best}.`;
+  }
+
+  $('[data-start]').addEventListener('click', start);
+  const b = bestScore('guess');
+  if (b !== null) status.textContent += ` Best: ${b}.`;
+</script>

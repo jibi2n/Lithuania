@@ -1,0 +1,145 @@
+@import 'tailwindcss';
+
+/* Flag base: yellow #FDB913, green #006A44, red #C1272D. Everything else is derived. */
+:root {
+  --bg: #f2f6f1;
+  --ink: #0d3a28;
+  --ink-soft: #3b5c4e;
+  --green: #006a44;
+  --surface: #e2ede5;
+  --surface-2: #cfe2d5;
+  --line: #b9d3c2;
+  --yellow: #fdb913;
+  --red: #c1272d;
+  --on-green: #ffffff;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1d15;
+    --ink: #e4efe7;
+    --ink-soft: #a6bfb1;
+    --green: #3fb27f;
+    --surface: #12301f;
+    --surface-2: #1a3f2a;
+    --line: #285a3e;
+    --red: #ef5a5f;
+    --on-green: #06170f;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-green: var(--green);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-yellow: var(--yellow);
+  --color-red: var(--red);
+  --color-on-green: var(--on-green);
+  --font-display: var(--font-playfair);
+  --font-sans: var(--font-nunito);
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 4rem;
+  }
+  body {
+    background: var(--bg);
+    overflow-x: clip;
+    line-height: 1.55;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  h2 { font-size: clamp(2.6rem, 11vw, 4.5rem); }
+  h3 { font-size: 1.6rem; }
+  p { text-wrap: pretty; }
+  :focus-visible {
+    outline: 3px solid var(--yellow);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  button { cursor: pointer; }
+}
+
+@layer components {
+  /* Woven sash (juosta): tiny diamonds and zigzags in the flag colors. */
+  .sash {
+    height: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14' viewBox='0 0 28 14'%3E%3Crect width='28' height='14' fill='%23006A44'/%3E%3Cpath d='M0 1.5h28M0 12.5h28' stroke='%23FDB913'/%3E%3Cpath d='M14 3l4 4-4 4-4-4z' fill='%23FDB913'/%3E%3Cpath d='M14 5.4l1.6 1.6-1.6 1.6-1.6-1.6z' fill='%23C1272D'/%3E%3Cpath d='M0 4l3 3-3 3zM28 4l-3 3 3 3z' fill='%23C1272D'/%3E%3Cpath d='M5 9l1.5-2.5L8 9M20 5l1.5 2.5L23 5' fill='none' stroke='%23fff' stroke-width='.8' stroke-opacity='.75'/%3E%3C/svg%3E");
+    background-size: 28px 14px;
+    background-repeat: repeat-x;
+  }
+  .stripes {
+    background: linear-gradient(var(--yellow) 0 33.34%, #006a44 0 66.67%, var(--red) 0);
+  }
+  .section {
+    padding: 4.5rem 1rem;
+    max-width: 68rem;
+    margin-inline: auto;
+  }  .lede {
+    color: var(--ink-soft);
+    font-size: 1.125rem;
+    max-width: 34rem;
+    margin-top: 0.75rem;
+  }
+  .btn {
+    min-height: 48px;
+    padding: 0.75rem 1.25rem;
+    border-radius: 999px;
+    font-weight: 800;
+    background: var(--green);
+    color: var(--on-green);
+    transition: transform 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    color: var(--ink);
+    background: var(--surface);
+    transition: background 0.2s, color 0.2s;
+  }
+  .chip[aria-current='true'] {
+    background: var(--green);
+    color: var(--on-green);
+  }
+  .photo {
+    border-radius: 1.25rem;
+    overflow: hidden;
+    background: var(--surface-2);
+  }
+  .photo img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Lenis */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
