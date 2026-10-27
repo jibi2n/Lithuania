@@ -1,0 +1,176 @@
+---
+import { MAIN, INSET, projectMain, projectInset } from '../data/map';
+import { pins } from '../data/content';
+import { photoUrl } from '../data/photos';
+
+const [, , W, H] = MAIN.viewBox.split(' ').map(Number);
+// Vilnius, Trakai, Kernavė and Kaunas sit close together; spread their labels out.
+const labelSide: Record<string, 'left' | 'right' | 'up' | 'down'> = { Trakai: 'down', Kernavė: 'up', Kaunas: 'left' };
+const placed = await Promise.all(
+  pins.map(async (p) => {
+    const [x, y] = projectMain(p.lat, p.lon);
+    return { ...p, left: (x / W) * 100, top: (y / H) * 100, side: labelSide[p.name] ?? 'right', img: await photoUrl(p.item.slug, 560) };
+  }),
+);
+const insetLabels = [
+  { t: 'Latvia', lat: 56.85, lon: 25.6 },
+  { t: 'Estonia', lat: 58.75, lon: 25.6 },
+  { t: 'Belarus', lat: 53.4, lon: 28.0 },
+  { t: 'Poland', lat: 52.6, lon: 19.6 },
+  { t: 'Russia', lat: 58.0, lon: 31.0 },
+  { t: 'Sweden', lat: 59.7, lon: 14.6 },
+].map((l) => ({ ...l, xy: projectInset(l.lat, l.lon) }));
+const ltInset = projectInset(55.3, 23.9);
+---
+<div class="map-wrap">
+  <figure class="map-fig" data-map>
+    <svg viewBox={MAIN.viewBox} class="map-svg" role="img" aria-label="Map of Lithuania filled with the yellow, green, and red flag stripes">
+      <defs>
+        <clipPath id="lt-clip"><path d={MAIN.lithuania} /></clipPath>
+      </defs>
+      {MAIN.neighbors.map((n) => <path d={n.d} class="map-neighbor"><title>{n.name}</title></path>)}
+      <g clip-path="url(#lt-clip)">
+        <rect class="map-stripe" x="0" y="0" width={W} height={H / 3 + 1} fill="#FDB913" />
+        <rect class="map-stripe" x="0" y={H / 3} width={W} height={H / 3 + 1} fill="#006A44" />
+        <rect class="map-stripe" x="0" y={(2 * H) / 3} width={W} height={H / 3} fill="#C1272D" />
+      </g>
+      <path d={MAIN.lithuania} class="map-outline" pathLength="1" />
+    </svg>
+    {placed.map((p, i) => (
+      <button
+        type="button"
+        class:list={['pin', `pin-${p.side}`]}
+        style={`left:${p.left.toFixed(2)}%;top:${p.top.toFixed(2)}%`}
+        data-pin={i}
+        data-img={p.img}
+        data-name={p.item.name}
+        data-caption={p.item.caption}
+        data-alt={p.item.alt}
+        aria-label={`${p.name}: show ${p.item.name}`}
+      >
+        <span class:list={['pin-dot', { 'pin-capital': p.capital }]} aria-hidden="true"></span>
+        <span class="pin-label" aria-hidden="true">{p.name}</span>
+      </button>
+    ))}
+  </figure>
+
+  <div class="map-card" aria-live="polite" data-map-card>
+    <p class="map-hint">Tap a pin to visit a place.</p>
+  </div>
+
+  <div class="map-extra">
+    <figure class="inset">
+      <svg viewBox={INSET.viewBox} role="img" aria-label="Lithuania's place in Europe, on the Baltic Sea between Latvia, Belarus, Poland, and Russia">
+        {INSET.countries.map((c) => <path d={c.d} class="inset-land" />)}
+        <path d={INSET.lithuania} class="inset-lt" />
+        <text x={INSET.sea.x} y={INSET.sea.y} class="inset-sea">Baltic Sea</text>
+        {insetLabels.map((l) => <text x={l.xy[0]} y={l.xy[1]} class="inset-label">{l.t}</text>)}
+        <text x={ltInset[0]} y={ltInset[1] + 3} class="inset-label inset-label-lt">Lithuania</text>
+      </svg>
+      <figcaption>Where Lithuania is in Europe</figcaption>
+    </figure>
+    <div class="manila">
+      <h3>From Manila</h3>
+      <p>Vilnius is about <strong>9,000 km</strong> away. Its clock is <strong>6 hours behind</strong> Manila (5 hours in summer).</p>
+      <p class="clock-label">Time in Vilnius now</p>
+      <p class="clock" data-clock>--:--</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .map-fig { position: relative; margin: 2rem 0 0; }
+  .map-svg { width: 100%; height: auto; display: block; border-radius: 1.25rem; background: color-mix(in oklab, #4a90b8 22%, var(--bg)); }
+  .map-neighbor { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .map-outline { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+  .pin {
+    position: absolute;
+    width: 44px; height: 44px;
+    margin: -22px 0 0 -22px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+  }
+  .pin-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--red); border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+    transition: transform 0.2s;
+  }
+  .pin-capital { width: 22px; height: 22px; background: #fff; border-color: var(--red); border-width: 6px; }
+  .pin[aria-pressed='true'] .pin-dot { transform: scale(1.35); }
+  .pin-label {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 0.8rem; font-weight: 800; white-space: nowrap;
+    padding: 0.1rem 0.45rem; border-radius: 6px;
+    background: var(--bg); color: var(--ink);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+    pointer-events: none;
+  }
+  .pin-right .pin-label { left: 36px; }
+  .pin-left .pin-label { right: 36px; }
+  .pin-up .pin-label, .pin-down .pin-label { left: 50%; transform: translateX(-50%); top: auto; }
+  .pin-up .pin-label { bottom: 34px; }
+  .pin-down .pin-label { top: 34px; }
+
+  .map-card {
+    margin-top: 1.25rem; min-height: 6rem;
+    background: var(--surface); border-radius: 1.25rem; padding: 1rem;
+  }
+  .map-hint { color: var(--ink-soft); font-weight: 700; }
+  .map-card :global(img) { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 0.85rem; background: var(--surface-2); }
+  .map-card :global(h3) { margin-top: 0.75rem; }
+
+  .map-extra { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem; }
+  @media (min-width: 640px) { .map-extra { grid-template-columns: 1fr 1fr; align-items: center; } }
+  .inset svg { width: 100%; height: auto; border-radius: 1rem; background: color-mix(in oklab, #4a90b8 22%, var(--bg)); }
+  .inset figcaption { font-size: 0.875rem; color: var(--ink-soft); margin-top: 0.4rem; }
+  .inset-land { fill: var(--surface-2); stroke: var(--line); stroke-width: 0.6; }
+  .inset-lt { fill: var(--green); stroke: var(--yellow); stroke-width: 1.2; }
+  .inset-sea { font: italic 600 11px var(--font-display); fill: #1f5d80; text-anchor: middle; }
+  .inset-label { font: 700 8px var(--font-sans); fill: var(--ink-soft); text-anchor: middle; }
+  .inset-label-lt { fill: var(--on-green); font-size: 6.5px; }
+  @media (prefers-color-scheme: dark) { .inset-sea { fill: #9cc9e4; } }
+  .manila p { margin-top: 0.5rem; }
+  .clock-label { color: var(--ink-soft); font-weight: 700; margin-top: 1rem !important; }
+  .clock { font: 700 3.25rem/1 var(--font-display); font-variant-numeric: tabular-nums; color: var(--green); }
+</style>
+
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  const card = document.querySelector<HTMLElement>('[data-map-card]')!;
+  const pinEls = [...document.querySelectorAll<HTMLButtonElement>('.pin')];
+
+  pinEls.forEach((pin) => {
+    pin.setAttribute('aria-pressed', 'false');
+    pin.addEventListener('click', () => {
+      pinEls.forEach((p) => p.setAttribute('aria-pressed', String(p === pin)));
+      const { img, name, caption, alt } = pin.dataset;
+      card.replaceChildren();
+      const image = Object.assign(document.createElement('img'), { src: img!, alt: alt!, width: 560, height: 350 });
+      const h = Object.assign(document.createElement('h3'), { textContent: name! });
+      const p = Object.assign(document.createElement('p'), { textContent: caption! });
+      card.append(image, h, p);
+    });
+  });
+
+  const clock = document.querySelector<HTMLElement>('[data-clock]')!;
+  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Vilnius', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const tick = () => (clock.textContent = fmt.format(new Date()));
+  tick();
+  setInterval(tick, 1000);
+
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    gsap.registerPlugin(ScrollTrigger);
+    const fig = document.querySelector('[data-map]')!;
+    gsap.set('.map-outline', { strokeDasharray: 1, strokeDashoffset: 1 });
+    gsap.set('.map-stripe', { scaleX: 0, transformOrigin: '0% 50%' });
+    gsap.set('.pin', { y: -40, autoAlpha: 0 });
+    gsap
+      .timeline({ scrollTrigger: { trigger: fig, start: 'top 70%', once: true } })
+      .to('.map-outline', { strokeDashoffset: 0, duration: 1.6, ease: 'power2.inOut' })
+      .to('.map-stripe', { scaleX: 1, duration: 0.6, stagger: 0.18, ease: 'power3.out' }, '-=0.2')
+      .to('.pin', { y: 0, autoAlpha: 1, duration: 0.5, stagger: 0.15, ease: 'bounce.out' });
+  }
+</script>

@@ -1,0 +1,139 @@
+---
+import { photoUrl } from '../data/photos';
+
+// Each pair: one side is a photo, word, or flag; the other is its matching word.
+const pairs = [
+  { id: 'cepelinai', a: { img: await photoUrl('cepelinai', 300), alt: 'Cepelinai dumplings' }, b: { text: 'Cepelinai' } },
+  { id: 'trakai', a: { img: await photoUrl('trakai', 300), alt: 'Trakai Island Castle' }, b: { text: 'Trakai Castle' } },
+  { id: 'stork', a: { img: await photoUrl('stork', 300), alt: 'White stork' }, b: { text: 'White Stork' } },
+  { id: 'labas', a: { text: 'Labas', lt: true }, b: { text: 'Hello' } },
+  { id: 'aciu', a: { text: 'Ačiū', lt: true }, b: { text: 'Thank you' } },
+  { id: 'flag', a: { flag: true, alt: 'Lithuanian flag' }, b: { text: 'Lithuania' } },
+];
+const cards = pairs.flatMap((p) => [{ id: p.id, ...p.a }, { id: p.id, ...p.b }]);
+---
+<article class="game" data-memory>
+  <header class="game-head">
+    <h3>Memory Match</h3>
+    <p class="game-stat" aria-live="polite" data-status>Find the 6 pairs. Fewer moves is better.</p>
+  </header>
+
+  <div class="mem-grid" data-grid>
+    {cards.map((c) => (
+      <button type="button" class="mem-card" data-id={c.id} data-label={'text' in c ? c.text : c.alt} aria-label="Hidden card">
+        <span class="mem-inner">
+          <span class="mem-back sash" aria-hidden="true"></span>
+          <span class="mem-front" aria-hidden="true">
+            {'img' in c && <img src={c.img} alt="" width="300" height="200" loading="lazy" />}
+            {'flag' in c && <span class="mem-flag stripes"></span>}
+            {'text' in c && <span class:list={['mem-word', { 'mem-lt': 'lt' in c }]}>{c.text}</span>}
+          </span>
+        </span>
+      </button>
+    ))}
+  </div>
+  <div class="mem-end" data-end hidden>
+    <p data-end-text></p>
+    <button type="button" class="btn" data-again>Play again</button>
+  </div>
+</article>
+
+<style>
+  .mem-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;
+    width: min(100%, calc((100svh - 9rem) * 0.6)); margin-inline: auto;
+  }
+  .mem-card { aspect-ratio: 4 / 5; perspective: 700px; border-radius: 0.85rem; }
+  .mem-inner {
+    position: relative; display: block; width: 100%; height: 100%;
+    transform-style: preserve-3d; transition: transform 0.45s cubic-bezier(.3,.7,.3,1.2);
+  }
+  .mem-card[data-state='up'] .mem-inner, .mem-card[data-state='done'] .mem-inner { transform: rotateY(180deg); }
+  .mem-back, .mem-front {
+    position: absolute; inset: 0; border-radius: 0.85rem; overflow: hidden;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  }
+  .mem-back { height: 100%; background-size: 28px 14px; background-repeat: repeat; border: 3px solid var(--green); }
+  .mem-front {
+    transform: rotateY(180deg); display: grid; place-items: center;
+    background: var(--bg); color: var(--ink); padding: 0.25rem; text-align: center;
+  }
+  .mem-front img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+  .mem-flag { position: absolute; inset: 18% 10%; border-radius: 4px; }
+  .mem-word { font-weight: 800; font-size: clamp(0.85rem, 3.8vw, 1.1rem); line-height: 1.15; }
+  .mem-lt { font: 700 clamp(1.4rem, 6.5vw, 1.9rem) var(--font-display); color: var(--green); }
+  .mem-card[data-state='done'] .mem-front { box-shadow: 0 0 0 3px var(--green), 0 0 18px 2px color-mix(in oklab, var(--green) 70%, transparent); }
+  .mem-card[data-state='done'] .mem-front::after {
+    content: '✓'; position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+    display: grid; place-items: center; border-radius: 50%;
+    background: var(--green); color: var(--on-green); font-weight: 900; font-size: 0.8rem;
+  }
+  .mem-end { text-align: center; margin-top: 1rem; display: grid; gap: 0.75rem; justify-items: center; }
+  .mem-end[hidden] { display: none; }
+</style>
+
+<script>
+  import { bestScore, setBest, shuffle } from '../scripts/games';
+
+  const root = document.querySelector<HTMLElement>('[data-memory]')!;
+  const grid = root.querySelector<HTMLElement>('[data-grid]')!;
+  const status = root.querySelector<HTMLElement>('[data-status]')!;
+  const endBox = root.querySelector<HTMLElement>('[data-end]')!;
+  const cards = [...grid.querySelectorAll<HTMLButtonElement>('.mem-card')];
+
+  let open: HTMLButtonElement[] = [], moves = 0, matched = 0, startedAt = 0, timer = 0;
+
+  const secs = () => (startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0);
+  const show = () => (status.textContent = `Moves ${moves} · Time ${secs()}s · Pairs ${matched} of 6`);
+
+  function setUp(card: HTMLButtonElement, state: 'down' | 'up' | 'done') {
+    card.dataset.state = state;
+    card.setAttribute('aria-label', state === 'down' ? 'Hidden card' : `${card.dataset.label}${state === 'done' ? ', matched' : ''}`);
+  }
+
+  function reset() {
+    shuffle(cards).forEach((c) => { grid.append(c); setUp(c, 'down'); c.disabled = false; });
+    open = []; moves = 0; matched = 0; startedAt = 0;
+    clearInterval(timer);
+    endBox.hidden = true;
+    const best = bestScore('memory');
+    status.textContent = `Find the 6 pairs. Fewer moves is better.${best !== null ? ` Best: ${best} moves.` : ''}`;
+  }
+
+  function flip(card: HTMLButtonElement) {
+    if (open.length === 2 || card.dataset.state !== 'down') return;
+    if (!startedAt) { startedAt = Date.now(); timer = window.setInterval(show, 1000); }
+    setUp(card, 'up');
+    open.push(card);
+    if (open.length < 2) return;
+    moves++;
+    const [a, b] = open;
+    if (a.dataset.id === b.dataset.id) {
+      setUp(a, 'done'); setUp(b, 'done');
+      a.disabled = b.disabled = true;
+      open = [];
+      matched++;
+      show();
+      if (matched === 6) finish();
+    } else {
+      show();
+      setTimeout(() => { setUp(a, 'down'); setUp(b, 'down'); open = []; }, 800);
+    }
+  }
+
+  function finish() {
+    clearInterval(timer);
+    const prev = bestScore('memory');
+    const best = prev === null ? moves : Math.min(prev, moves);
+    setBest('memory', best);
+    root.querySelector('[data-end-text]')!.innerHTML =
+      `<strong style="font:700 2rem var(--font-display)">${moves <= 10 ? 'Puiku! (Excellent!)' : 'Gerai! (Good!)'}</strong><br>` +
+      `All pairs in ${moves} moves and ${secs()} seconds. Best: ${best} moves.`;
+    status.textContent = `You found all pairs in ${moves} moves and ${secs()} seconds. Best: ${best} moves.`;
+    endBox.hidden = false;
+  }
+
+  cards.forEach((c) => c.addEventListener('click', () => flip(c)));
+  root.querySelector('[data-again]')!.addEventListener('click', reset);
+  reset();
+</script>
